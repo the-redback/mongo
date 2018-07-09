@@ -1,5 +1,5 @@
 #!/bin/bash
-set -Eeuo pipefail
+set -Eexuo pipefail
 
 if [ "${1:0:1}" = '-' ]; then
 	set -- mongod "$@"
