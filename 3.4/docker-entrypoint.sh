@@ -4,7 +4,6 @@ set -Eexuo pipefail
 echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>> 1"
 
 if [ "${1:0:1}" = '-' ]; then
-echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>> 2"
 	set -- mongod "$@"
 fi
 
@@ -14,9 +13,7 @@ echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>> 3"
 # allow the container to be started with `--user`
 # all mongo* commands should be dropped to the correct user
 if [[ "$originalArgOne" == mongo* ]] && [ "$(id -u)" = '0' ]; then
-echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>> 4"
 	if [ "$originalArgOne" = 'mongod' ]; then
-	echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>> 5"
 		chown -R mongodb /data/configdb /data/db
 	fi
 
@@ -44,21 +41,17 @@ echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>> 9"
 # (will allow for "$XYZ_DB_PASSWORD_FILE" to fill in the value of
 #  "$XYZ_DB_PASSWORD" from a file, especially for Docker's secrets feature)
 file_env() {
-echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>> 10"
 	local var="$1"
 	local fileVar="${var}_FILE"
 	local def="${2:-}"
 	if [ "${!var:-}" ] && [ "${!fileVar:-}" ]; then
-	echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>> 11"
 		echo >&2 "error: both $var and $fileVar are set (but are exclusive)"
 		exit 1
 	fi
 	local val="$def"
 	if [ "${!var:-}" ]; then
-	echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>> 12"
 		val="${!var}"
 	elif [ "${!fileVar:-}" ]; then
-	echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>> 13"
 		val="$(< "${!fileVar}")"
 	fi
 	export "$var"="$val"
@@ -67,13 +60,11 @@ echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>> 10"
 echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>> 14"
 # see https://github.com/docker-library/mongo/issues/147 (mongod is picky about duplicated arguments)
 _mongod_hack_have_arg() {
-echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>> 15"
 	local checkArg="$1"; shift
 	local arg
 	for arg; do
 		case "$arg" in
 			"$checkArg"|"$checkArg"=*)
-			    echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>> 16"
 				return 0
 				;;
 		esac
@@ -83,19 +74,15 @@ echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>> 15"
 echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>> 17"
 # _mongod_hack_get_arg_val '--some-arg' "$@"
 _mongod_hack_get_arg_val() {
-echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>> 18"
 	local checkArg="$1"; shift
 	while [ "$#" -gt 0 ]; do
-	    echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>> 19"
 		local arg="$1"; shift
 		case "$arg" in
 			"$checkArg")
-			    echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>> 20"
 				echo "$1"
 				return 0
 				;;
 			"$checkArg"=*)
-			    echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>> 21"
 				echo "${arg#$checkArg=}"
 				return 0
 				;;
@@ -108,11 +95,9 @@ declare -a mongodHackedArgs
 # _mongod_hack_ensure_arg '--some-arg' "$@"
 # set -- "${mongodHackedArgs[@]}"
 _mongod_hack_ensure_arg() {
-echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>> 23"
 	local ensureArg="$1"; shift
 	mongodHackedArgs=( "$@" )
 	if ! _mongod_hack_have_arg "$ensureArg" "$@"; then
-	echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>> 24"
 		mongodHackedArgs+=( "$ensureArg" )
 	fi
 }
@@ -120,14 +105,11 @@ echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>> 25"
 # _mongod_hack_ensure_no_arg '--some-unwanted-arg' "$@"
 # set -- "${mongodHackedArgs[@]}"
 _mongod_hack_ensure_no_arg() {
-echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>> 26"
 	local ensureNoArg="$1"; shift
 	mongodHackedArgs=()
 	while [ "$#" -gt 0 ]; do
-	    echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>> 27"
 		local arg="$1"; shift
 		if [ "$arg" = "$ensureNoArg" ]; then
-		    echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>> 28"
 			continue
 		fi
 		mongodHackedArgs+=( "$arg" )
@@ -137,20 +119,16 @@ echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>> 29"
 # _mongod_hack_ensure_no_arg '--some-unwanted-arg' "$@"
 # set -- "${mongodHackedArgs[@]}"
 _mongod_hack_ensure_no_arg_val() {
-echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>> 30"
 	local ensureNoArg="$1"; shift
 	mongodHackedArgs=()
 	while [ "$#" -gt 0 ]; do
-	    echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>> 31"
 		local arg="$1"; shift
 		case "$arg" in
 			"$ensureNoArg")
-			    echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>> 32"
 				shift # also skip the value
 				continue
 				;;
 			"$ensureNoArg"=*)
-			    echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>> 33"
 				# value is already included
 				continue
 				;;
@@ -162,16 +140,13 @@ echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>> 34"
 # _mongod_hack_ensure_arg_val '--some-arg' 'some-val' "$@"
 # set -- "${mongodHackedArgs[@]}"
 _mongod_hack_ensure_arg_val() {
-echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>> 35"
 	local ensureArg="$1"; shift
 	local ensureVal="$1"; shift
 	_mongod_hack_ensure_no_arg_val "$ensureArg" "$@"
 	mongodHackedArgs+=( "$ensureArg" "$ensureVal" )
 }
-echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>> 36"
 # _js_escape 'some "string" value'
 _js_escape() {
-echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>> 37"
 	jq --null-input --arg 'str' "$1" '$str'
 }
 echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>> 38"
@@ -179,15 +154,11 @@ echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>> 38"
 jsonConfigFile="${TMPDIR:-/tmp}/docker-entrypoint-config.json"
 tempConfigFile="${TMPDIR:-/tmp}/docker-entrypoint-temp-config.json"
 _parse_config() {
-echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>> 39"
 	if [ -s "$tempConfigFile" ]; then
-	echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>> 40"
 		return 0
 	fi
-echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>> 41"
 	local configPath
 	if configPath="$(_mongod_hack_get_arg_val --config "$@")"; then
-	echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>> 42"
 		# if --config is specified, parse it into a JSON file so we can remove a few problematic keys (especially SSL-related keys)
 		# see https://docs.mongodb.com/manual/reference/configuration-options/
 		mongo --norc --nodb --quiet --eval "load('/js-yaml.js'); printjson(jsyaml.load(cat($(_js_escape "$configPath"))))" > "$jsonConfigFile"
@@ -198,19 +169,16 @@ echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>> 41"
 	return 1
 }
 echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>> 43"
+
 dbPath=
 _dbPath() {
-echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>> 44"
 	if [ -n "$dbPath" ]; then
-	echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>> 45"
 		echo "$dbPath"
 		return
 	fi
 
 	if ! dbPath="$(_mongod_hack_get_arg_val --dbpath "$@")"; then
-	echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>> 46"
 		if _parse_config "$@"; then
-		echo ">>>>>>>>>>>>>>>>>>>>>>>>>>>> 47"
 			dbPath="$(jq '.storage.dbPath' "$jsonConfigFile")"
 		fi
 	fi
